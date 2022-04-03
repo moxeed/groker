@@ -29,7 +29,12 @@ func (service *Service) SyncPublish(data BaseMessage, response *string) error {
 		Sender: sender,
 	}
 
-	Send(message)
+	err := Send(message)
+
+	if err != nil {
+		return err
+	}
+
 	sender.Wait()
 
 	*response = "ok"
@@ -45,7 +50,11 @@ func (service *Service) AsyncPublish(data AsyncMessage, response *string) error 
 		Sender: sender,
 	}
 
-	Send(message)
+	err := Send(message)
+
+	if err != nil {
+		return err
+	}
 
 	*response = "ok"
 

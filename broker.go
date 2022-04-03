@@ -10,7 +10,7 @@ import (
 
 func main() {
 
-	addy, err := net.ResolveTCPAddr("tcp", "0.0.0.0:5000")
+	addy, err := net.ResolveTCPAddr("tcp", "localhost:5000")
 
 	if err != nil {
 		log.Fatal(err)

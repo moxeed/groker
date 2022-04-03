@@ -2,6 +2,7 @@ package broker
 
 import (
 	"fmt"
+	"sync"
 )
 
 type Sender interface {
@@ -17,16 +18,27 @@ type Message struct {
 type broker struct {
 	queue       chan Message
 	subscribers []Subscriber
+	client      sync.Mutex
 }
 
 var instance broker
 
-func Send(message Message) {
+func Send(message Message) error {
 	fmt.Println("***Message Recieved")
-	instance.queue <- message
+
+	select {
+	case instance.queue <- message:
+	default:
+		println("overflow")
+		return fmt.Errorf("buffer is full")
+	}
+
+	return nil
 }
 
 func Subscribe(subscriber Subscriber) {
+	defer instance.client.Unlock()
+
 	fmt.Println("***Subscriber Registered " + subscriber.hook)
 	instance.subscribers = append(instance.subscribers, subscriber)
 }
@@ -35,14 +47,22 @@ func init() {
 	instance = broker{
 		make(chan Message, 10),
 		[]Subscriber{},
+		sync.Mutex{},
 	}
 
 	instance.start(1)
 }
 
 func publish(message Message) {
-	for _, subscriber := range instance.subscribers {
-		subscriber.Push(message)
+	if len(instance.subscribers) == 0 {
+		instance.client.Lock()
+	}
+
+	for index, subscriber := range instance.subscribers {
+		err := subscriber.Push(message)
+		if err != nil {
+			instance.subscribers = append(instance.subscribers[:index], instance.subscribers[index+1:]...)
+		}
 	}
 	fmt.Println("***Message Published")
 }

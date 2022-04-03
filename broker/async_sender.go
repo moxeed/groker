@@ -18,6 +18,7 @@ func (sender *AsyncSender) Ack(header string) {
 
 	if err != nil {
 		fmt.Println(err)
+		return
 	}
 
 	var relpy string
